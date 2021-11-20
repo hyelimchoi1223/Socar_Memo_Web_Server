@@ -11,6 +11,11 @@ python3 -m venv venv
 source ./venv/bin/activate
 ```
 
+## 가상환경 종료
+```bash
+deactivate
+```
+
 > ## 필요한 패키지 없을 경우
 > ```bash
 > pip install -r requirements.txt
