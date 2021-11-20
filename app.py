@@ -9,6 +9,15 @@ def index():
 
     return render_template('index.html', suggestion=blogger)
 
+@app.route('/layout')
+def layout():
+    return render_template('layout.html')
+
+@app.route('/result', methods=['POST'])
+def result():
+    data = request.form['word']
+    print(data)
+    return data
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
