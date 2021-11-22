@@ -4,14 +4,14 @@
 <head>
   <title>Portfolio</title>
   <meta charset="utf-8">
-  <link rel="stylesheet" href="css/styles.css">
+  <link rel="stylesheet" href="../static/css/styles.css">
   <link href="https://fonts.googleapis.com/earlyaccess/notosanskr.css" rel="stylesheet">
 </head>
 
 <body>
   <!-- navigation bar -->
   <div class="navbar">
-    <img src="images/profile_img.png" width="34" height="34">
+    <img src="../static/images/profile_img.png" width="34" height="34">
     <ul class="menu-right">
       <li><button id="about-btn">About</button>
       <li><button id="contact-btn">Contact</button>
@@ -103,18 +103,33 @@
     <div class="vertical-center">
       <h3>아이카센터</h3>
       <p>언제든지 편하게 검색해주세요. 감사합니다!</p>
-      <form>
-        <textarea type="text" name="description 입력" placeholder="입력해주세요"></textarea>
+      <form action="home" method="POST">
+        <div>
+          <textarea type="text" name="description" placeholder="입력해주세요"></textarea>
+        </div>
+        <div class="vertical-right" style="float: right;">
+          <input type="submit" value="확인">
+        </div>
       </form>
       <div class="확인"></div>
-      <div class="vertical-right">
+      <div class="vertical-right" style="float: right;">
         <a href="#">확인</a>
+      </div>
+      {% if description != '' %}
+      <div>
+
+        <p>{{description}}</p>
+
+      </div>
+      {% endif %}
+      <div>
+
       </div>
   </section>
 
   <script src="https://code.jquery.com/jquery-3.2.1.min.js"
     integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4=" crossorigin="anonymous"></script>
-  <script src="js/script.js"></script>
+  <script src="../static/js/script.js"></script>
 </body>
 
 </html>
