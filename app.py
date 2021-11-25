@@ -15,9 +15,17 @@ def index():
     return render_template("index.html", suggestion=blogger)
 
 
-@app.route("/layout")
+@app.route("/layout", methods=["POST"])
 def layout():
-    return render_template("layout.html")
+    if request.method == "POST":
+        data = request.get_json()
+        word = data["word"]
+        res = requests.get(f"{rest_url}vocab/search?word={word}")
+        data = res.content.decode("unicode-escape")
+        if data == None or data == "":
+            return None
+        data = json.loads(data)
+    return data
 
 
 @app.route("/home", methods=["GET", "POST"])
@@ -28,6 +36,7 @@ def home():
         # description = "미션 교체 카맨모터스 법인카드 결제건"
         res = requests.get(f"{rest_url}classify?desc={description}")
         data = res.content.decode("unicode-escape")
+
         data = json.loads(data)
         data = sorted(data.items(), key=(lambda x: x[1]), reverse=True)
         data = dict(data[:5])

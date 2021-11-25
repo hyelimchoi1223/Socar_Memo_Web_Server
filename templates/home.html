@@ -13,60 +13,96 @@
         textarea_Click(this);
       });
     });
-
     $("#description").click(function () {
-      alert("Hello");
+      textarea_Click(this)
     });
 
-    class Stack {
-      constructor() {
-        this._arr = [];
+    function word_click(origin, new_text) {
+      var all_text = $("#description").val()
+
+      var result = all_text.replace(origin, new_text)
+      if (result == "undefined") {
+        result = all_text
       }
-      push(item) {
-        this._arr.push(item);
-      }
-      pop() {
-        return this._arr.pop();
-      }
-      peek() {
-        return this._arr[this._arr.length - 1];
-      }
-      length() {
-        return this._arr.length
-      }
+      $("#description").val(result)
     }
-
-
-
 
     function textarea_Click(e) {
       var text = e.value;
-      var caret = getCaretPosition(e) - 1;
+      if (text === "")
+        return;
 
-      if (text === "") {
+      var caret = getCaretPosition(e) - 1;
+      var word = getTextAreaWord(text, caret)
+      if (word == "") {
         return;
       }
+      $.ajax({
+        type: "POST",
+        url: "/layout",
+        contentType: "application/json",
+        data: JSON.stringify({
+          word: word
+        }),
+        dataType: "json",
+        success: function (wordlist) {
+          var wordlist_script = "";
+          var items = Object.keys(wordlist).map(function (key) {
+            return [key, wordlist[key]];
+          });
+
+          // Sort the array based on the second element
+          items.sort(function (first, second) {
+            return second[1] - first[1];
+          });
+          if (items.length == 0) {
+            return;
+          }
+          wordlist_script += '<ul style="width:100%;text-align: left;padding-inline-start: 5px !important;">';
+          for (i = 0; i < items.length; i++) {
+            if (i > 5) {
+              break
+            }
+            var v = items[i][0];
+            var w = items[i][1];
+            wordlist_script +=
+              '<li style="display:inline-block;padding: 0px 5px 0px 5px;color: #4a4a4a;"><button type="button" onclick=word_click("' +
+              word + '","' + v + '")>' +
+              v +
+              '</button></li>';
+          }
+          wordlist_script += '</ul>'
+          $("#wordlist").html(wordlist_script);
+        },
+        error: function (xtr, status, error) {
+          console.log(xtr + ":" + status + ":" + error);
+        }
+      });
+    }
+
+    function getTextAreaWord(text, caret) {
       stack = []
       while (true) {
         char = text.charAt(caret)
 
-        if (char == " " || caret < 0) {
+        if (char == " " || caret < 0)
           break;
-        }
+
         stack.push(char);
         caret--;
       }
 
 
       let word = ''
-
-      for (i = 0; i < stack.length + 1; i++) {
+      stack_len = stack.length
+      for (i = 0; i < stack_len; i++) {
         word += stack.pop();
       }
-
+      return word
     }
 
     function getCaretPosition(textarea) {
+      console.log(textarea.selectionStart)
       if (textarea.selectionStart) {
         return textarea.selectionStart;
       } else {
@@ -121,8 +157,13 @@
                 textarea_Click(this)
               });
             </script>
-            <div class="vertical-right" style="float: right;">
-              <input type="submit" value="확인">
+            <div>
+              <div id="wordlist">
+
+              </div>
+              <div class="vertical-right" style="float: right;">
+                <input type="submit" value="확인">
+              </div>
             </div>
           </div>
 
