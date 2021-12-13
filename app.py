@@ -8,49 +8,45 @@ app = Flask(__name__)
 rest_url = "http://34.132.153.232:5000/"
 
 
-@app.route("/")
+@app.route("/", methods=["GET", "POST"])
 def index():
-    blogger = {"name": "jvvp", "eloc": "songpa"}
-
-    return render_template("index.html", suggestion=blogger)
-
-
-@app.route("/layout", methods=["POST"])
-def layout():
-    if request.method == "POST":
-        data = request.get_json()
-        word = data["word"]
-        res = requests.get(f"{rest_url}vocab/search?word={word}")
-        data = res.content.decode("unicode-escape")
-        if data == None or data == "":
-            return None
-        data = json.loads(data)
-    return data
-
-
-@app.route("/home", methods=["GET", "POST"])
-def home():
     data = {}
     if request.method == "POST":
         description = request.form["description"]
-        # description = "미션 교체 카맨모터스 법인카드 결제건"
-        res = requests.get(f"{rest_url}classify?desc={description}")
-        data = res.content.decode("unicode-escape")
-
-        data = json.loads(data)
-        data = sorted(data.items(), key=(lambda x: x[1]), reverse=True)
-        data = dict(data[:5])
-        data = {k: round(v, 2) * 100 for k, v in data.items()}
         return render_template("home.html", description=data)
 
     return render_template("home.html", description=data)
 
 
-@app.route("/result", methods=["POST"])
-def result():
-    data = request.form["word"]
-    print(data)
-    return data
+@app.route("/word", methods=["POST"])
+def word():
+    if request.method == "POST":
+        data = request.get_json()
+        word = data["word"]
+        res = requests.get(f"{rest_url}vocab/search?word={word}")
+        data = res.content.decode("unicode-escape")
+
+        if data == None or data == "":
+            return None
+        data = json.loads(data)
+        result = {}
+        for d in data:
+            result[d[0]] = d[1]
+    return result
+
+
+@app.route("/classify", methods=["POST"])
+def classify():
+    if request.method == "POST":
+        data = request.get_json()
+        description = data["description"]
+        res = requests.get(f"{rest_url}classify?desc={description}")
+        data = res.content.decode("unicode-escape")
+        if data == None or data == "":
+            return None
+        data = json.loads(data)
+        data = sum(data, [])
+    return {"result": data}
 
 
 if __name__ == "__main__":

@@ -29,3 +29,6 @@ python3 app.py
 ```bash
 flask run
 ```
+
+# 실행 화면
+![실행 결과](https://user-images.githubusercontent.com/63278762/145802650-327b3191-f5ef-4194-aa6b-38acc5521149.gif)

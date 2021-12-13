@@ -6,25 +6,82 @@
   <meta charset="utf-8">
   <link rel="stylesheet" href="../static/css/styles.css">
   <link href="https://fonts.googleapis.com/earlyaccess/notosanskr.css" rel="stylesheet">
+  <!-- Bootstrap core CSS -->
+  <link href="../static/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+
+
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.10.1/jquery.min.js"></script>
   <script type="text/javascript">
     $(document).ready(function () {
       $('body').on('click', 'description', function () {
         textarea_Click(this);
       });
+      $('#myform').on('submit', function (e) {
+        e.preventDefault();
+        initialize_classify();
+        $('body').addClass('busy');
+        classify_Click(this)
+
+
+      });
     });
+
     $("#description").click(function () {
       textarea_Click(this)
     });
+    $('#myform').submit(function () {
+      e.preventDefault();
+      initialize_classify();
+      $('body').addClass('busy');
+      classify_Click(this)
+    })
+
+    function initialize_classify() {
+      var classify_script = "";
+      $("#classifylist").html(classify_script);
+    }
+
+    function classify_Click(e) {
+      var description = $('#description').val();
+      if (description === "")
+        return;
+
+
+      $.ajax({
+        url: '/classify',
+        type: 'POST',
+        data: JSON.stringify({
+          description: description
+        }),
+        dataType: "json",
+        contentType: "application/json",
+        success: function (data) {
+          var classify_script = "";
+          data = data["result"]
+          for (i = 0; i < data.length; i++) {
+            var v = data[i];
+            classify_script += '<input type="checkbox" class="btn-check" name="options" id="option' + (i + 1) +
+              '" autocomplete="off">'
+            classify_script += '<label class="btn btn-outline-primary mb-1" for="option' + (i + 1) + '">' + v +
+              '</label>'
+          }
+          $("#classifylist").html(classify_script);
+          $('body').removeClass('busy');
+        },
+        error: function (xtr, status, error) {
+          console.log(xtr + ":" + status + ":" + error);
+          $('body').removeClass('busy');
+        }
+      });
+    }
+
 
     function word_click(origin, new_text) {
-      var all_text = $("#description").val()
-
-      var result = all_text.replace(origin, new_text)
-      if (result == "undefined") {
-        result = all_text
-      }
-      $("#description").val(result)
+      var description = document.getElementById('description');
+      var startindex = description.selectionStart;
+      var endindex = description.selectionEnd;
+      description.focus();
+      description.setRangeText(new_text, startindex, endindex, 'end');
     }
 
     function textarea_Click(e) {
@@ -32,14 +89,20 @@
       if (text === "")
         return;
 
-      var caret = getCaretPosition(e) - 1;
-      var word = getTextAreaWord(text, caret)
-      if (word == "") {
+      var caret = getCaretPosition(e);
+      startindex = getCaretIndex(text, caret)
+
+      const description = document.getElementById('description');
+      description.focus();
+      description.setSelectionRange(startindex, caret);
+      var word = description.value.substring(startindex, caret);
+      console.log(word)
+      if (word === "") {
         return;
       }
       $.ajax({
         type: "POST",
-        url: "/layout",
+        url: "/word",
         contentType: "application/json",
         data: JSON.stringify({
           word: word
@@ -58,66 +121,52 @@
           if (items.length == 0) {
             return;
           }
-          wordlist_script += '<ul style="width:100%;text-align: left;padding-inline-start: 5px !important;">';
+          wordlist_script += '<ul class="list-group list-group-horizontal">';
           for (i = 0; i < items.length; i++) {
-            if (i > 5) {
+            if (i >= 5) {
               break
             }
             var v = items[i][0];
             var w = items[i][1];
             wordlist_script +=
-              '<li style="display:inline-block;padding: 0px 5px 0px 5px;color: #4a4a4a;"><button type="button" onclick=word_click("' +
+              '<button type="button" class="list-group-item list-group-item-action" onclick=word_click("' +
               word + '","' + v + '")>' +
               v +
-              '</button></li>';
+              '</button>';
           }
           wordlist_script += '</ul>'
           $("#wordlist").html(wordlist_script);
         },
         error: function (xtr, status, error) {
           console.log(xtr + ":" + status + ":" + error);
+          var wordlist_script = "";
+          $("#wordlist").html(wordlist_script);
         }
       });
     }
 
-    function getTextAreaWord(text, caret) {
-      stack = []
+    function getCaretIndex(text, caret) {
+      caret = caret - 1
       while (true) {
         char = text.charAt(caret)
 
-        if (char == " " || caret < 0)
-          break;
+        if (caret <= 0)
+          return
 
-        stack.push(char);
+        if (char == " ")
+          return caret + 1
+
         caret--;
       }
-
-
-      let word = ''
-      stack_len = stack.length
-      for (i = 0; i < stack_len; i++) {
-        word += stack.pop();
-      }
-      return word
+      return caret
     }
 
     function getCaretPosition(textarea) {
-      console.log(textarea.selectionStart)
       if (textarea.selectionStart) {
         return textarea.selectionStart;
       } else {
         // TODO: Handle IE ugliness on your own :)
         return 0;
-      }
-    }
-
-    function setSelection(begin, end, textarea) {
-      if ("selectionStart" in textarea) {
-        textarea.selectionStart = begin;
-        textarea.selectionEnd = end + 1;
-      } else if (document.selection) {
-        // TODO: Handle IE ugliness on your own :)
-        return;
       }
     }
   </script>
@@ -129,7 +178,6 @@
     <img src="../static/images/profile_img.png" width="34" height="34">
     <ul class="menu-right">
       <li><button id="about-btn">About</button>
-      <li><button id="contact-btn">Contact</button>
     </ul>
   </div>
 
@@ -144,124 +192,59 @@
   <!-- contact me -->
   <section class="about contact">
     <div class="helper"></div>
-    <div class="vertical-center" style="width:70%;">
-      <h3>아이카센터</h3>
-      <p>언제든지 편하게 검색해주세요. 감사합니다!</p>
-      <form action="home" method="POST" style="width:100% !important;">
-        <div style="display: inline-flex;width: 100%;flex-wrap: nowrap;flex-direction: row;">
-          <div style="width:80%;">
-            <textarea type="text" id="description" name="description"
-              placeholder="입력해주세요">{{request.form['description']}}</textarea>
+    <main class="vertical-center container-fluid px-3 " style="width:70%;">
+      <h3 class="text-center">아이카센터</h3>
+      <p class="text-center">언제든지 편하게 검색해주세요. 감사합니다!</p>
+      <form action="home" id="myform" style="width:100% !important;">
+        <div class="row g-3 align-items-center">
+          <div class="col-8 form-floating">
+            <textarea class="form-control" type="text" id="description" name="description"
+              style="height:222px;"></textarea>
+            <label for="description" style="color: black;">정비 메모</label>
             <script type="text/javascript">
               $("#description").click(function () {
                 textarea_Click(this)
               });
             </script>
-            <div>
-              <div id="wordlist">
-
+          </div>
+          <div class="col-4">
+            <div style="height:222px;" class="text-center">
+              <div id="spinner" class="spinner m-5">
+                <div class="spinner-border text-dark" role="status" aria-hidden="true">
+                  <span class="sr-only"></span>
+                </div>
               </div>
-              <div class="vertical-right" style="float: right;">
-                <input type="submit" value="확인">
+              <div id="classifylist" class="d-inline-flex flex-wrap justify-content-around w-100">
+
               </div>
             </div>
           </div>
+        </div>
+        <div class="row pt-2">
+          <div class="col-6">
+            <div id="wordlist">
 
-          <div style="width:20%;margin-left: 10px;border: solid 1px #ebebeb;height:222px;border-radius: 4px;">
-            {% if description is not none %}
-            <ul style="width:100%;padding-inline-start: 5px !important;">
-              {% for key, weight in description.items() %}
-              <li style="display:inline-block;color: #4a4a4a;">{{ key }} [{{ weight }}%]</li>
-              {% endfor %}
-
-
-            </ul>
-            {%endif%}
+            </div>
           </div>
-          <br />
+          <div class="col-2">
+            <input type="submit" value="확인" class="btn btn-primary">
+          </div>
+        </div>
 
         </div>
       </form>
-      <div>
-
-      </div>
+    </main>
   </section>
-  <!-- about me -->
-  <!-- <section class="about">
-    <div class="helper"></div>
-    <div class="vertical-center">
-      <h3>About Data</h3>
-      <p>안녕하세요 나무위키X지식백과 만남으로 탄생했습니다! 만나서 반가워요😉</p>
-
-      <div class="skillset">
-        <div class="skill">
-          <div class="title">HTML5</div>
-
-          <div class="bar">
-            <div class="inner-bar"></div>
-
-            <span class="percentage">90%</span>
-          </div>
-        </div>
-
-        <div class="skill">
-          <div class="title">CSS3</div>
-
-          <div class="bar">
-            <div class="inner-bar"></div>
-
-            <span class="percentage">90%</span>
-          </div>
-        </div>
-
-        <div class="skill">
-          <div class="title">jQuery</div>
-
-          <div class="bar">
-            <div class="inner-bar"></div>
-
-            <span class="percentage">85%</span>
-          </div>
-        </div>
-
-        <div class="skill">
-          <div class="title">Python</div>
-
-          <div class="bar">
-            <div class="inner-bar"></div>
-
-            <span class="percentage">75%</span>
-          </div>
-        </div>
-
-        <div class="skill">
-          <div class="title">Rails</div>
-
-          <div class="bar">
-            <div class="inner-bar"></div>
-
-            <span class="percentage">70%</span>
-          </div>
-        </div>
-
-        <div class="skill">
-          <div class="title">Sketch</div>
-
-          <div class="bar">
-            <div class="inner-bar"></div>
-
-            <span class="percentage">90%</span>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section> -->
-
 
 
   <script src="https://code.jquery.com/jquery-3.2.1.min.js"
     integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4=" crossorigin="anonymous"></script>
   <script src="../static/js/script.js"></script>
+  <!-- Bootstrap core JavaScript
+  ================================================== -->
+  <!-- Placed at the end of the document so the pages load faster -->
+  <script src="../static/bootstrap/js/bootstrap.min.js"></script>
+
 </body>
 
 </html>
