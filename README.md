@@ -31,4 +31,5 @@ flask run
 ```
 
 # 실행 화면
-![실행 결과](https://user-images.githubusercontent.com/63278762/145802650-327b3191-f5ef-4194-aa6b-38acc5521149.gif)
+![시연결과](https://user-images.githubusercontent.com/63278762/145804249-70e3d9af-3422-4c52-b452-f9fa5581f555.gif)
+
